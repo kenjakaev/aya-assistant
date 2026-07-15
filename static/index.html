@@ -6,10 +6,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Aya Assistant</title>
     <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/markdown-it@14.1.0/dist/markdown-it.min.js"></script>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/markdown-it-texmath@1.0.0/css/texmath.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/markdown-it-texmath@1.0.0/texmath.min.js"></script>
 </head>
 
 <body>
-    <h1>Aya is ready!</h1>
+    <div class="chat-container">
+        <header class="chat-header">
+            <h2>Aya Assistant</h2>
+            <span class="status-badge">online</span>
+        </header>
+
+        <main class="chat-messages" id="chat-messages">
+            <div class="message bot-message">
+                Hello! How can I help you?
+            </div>
+        </main>
+
+        <form class="chat-input-area" id="chat-form">
+            <input type="text" id="message-input" placeholder="Write a message..." autocomplete="off" required>
+            <button type="submit" id="send-button">Send</button>
+        </form>
+    </div>
+
     <script src="/static/script.js"></script>
 </body>
 
