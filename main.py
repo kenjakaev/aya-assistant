@@ -10,7 +10,7 @@ model_id = "google/gemma-2-2b-it"
 tokenizer = AutoTokenizer.from_pretrained(model_id)
 
 model = AutoModelForCausalLM.from_pretrained(
-    model_id, dtype=torch.float16, device_map="cuda"
+    model_id, dtype=torch.float16, device_map="auto"
 )
 
 app = FastAPI(title="Aya Assistant API")
