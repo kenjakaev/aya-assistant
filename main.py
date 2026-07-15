@@ -1,4 +1,6 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from pydantic import BaseModel
 import torch
@@ -12,6 +14,7 @@ model = AutoModelForCausalLM.from_pretrained(
 )
 
 app = FastAPI(title="Aya Assistant API")
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
 class UserMessage(BaseModel):
@@ -20,7 +23,7 @@ class UserMessage(BaseModel):
 
 @app.get("/")
 def read_root():
-    return {"status": "Aya is alive", "version": "0.1.0"}
+    return FileResponse("static/index.html")
 
 
 @app.post("/chat")
