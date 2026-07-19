@@ -5,6 +5,7 @@ __pycache__/
 env/
 venv/
 .pytest_cache/
+.vscode/
 # Jupyter Notebooks
 .ipynb_checkpoints/
 */.ipynb_checkpoints
