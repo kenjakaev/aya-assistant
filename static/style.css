@@ -126,6 +126,46 @@ body {
     gap: 12px;
 }
 
+.typing-indicator {
+    display: flex;
+    padding: 10px;
+    background-color: #222227;
+    border-radius: 10px;
+    width: fit-content;
+    margin-bottom: 10px;
+}
+
+/* Стили для каждой точки */
+.typing-indicator span {
+    height: 10px;
+    width: 10px;
+    float: left;
+    margin: 0 2px;
+    background-color: #888;
+    display: block;
+    border-radius: 50%;
+    opacity: 0.4;
+}
+
+/* Сама анимация пульсации */
+.typing-indicator span:nth-child(1) {
+    animation: 1s blink infinite 0.3333s;
+}
+
+.typing-indicator span:nth-child(2) {
+    animation: 1s blink infinite 0.6666s;
+}
+
+.typing-indicator span:nth-child(3) {
+    animation: 1s blink infinite 0.9999s;
+}
+
+@keyframes blink {
+    50% {
+        opacity: 1;
+    }
+}
+
 #message-input {
     flex: 1;
     background-color: #121214;
