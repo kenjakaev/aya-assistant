@@ -15,8 +15,8 @@ body {
 }
 
 .chat-container {
-    width: 100%;
-    max-width: 600px;
+    width: 90%;
+    max-width: 1000px;
     height: 80vh;
     background-color: #1a1a1e;
     border-radius: 16px;
@@ -116,6 +116,13 @@ body {
 .message th {
     background-color: #222227;
     font-weight: bold;
+}
+
+.message ul,
+.message ol {
+    padding-left: 20px;
+    margin-top: 5px;
+    margin-bottom: 5px;
 }
 
 .chat-input-area {
