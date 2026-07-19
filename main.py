@@ -2,6 +2,9 @@ from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import TextIteratorStreamer
+from fastapi.responses import StreamingResponse
+from threading import Thread
 from pydantic import BaseModel
 import torch
 
@@ -10,7 +13,7 @@ model_id = "google/gemma-2-2b-it"
 tokenizer = AutoTokenizer.from_pretrained(model_id)
 
 model = AutoModelForCausalLM.from_pretrained(
-    model_id, dtype=torch.float16, device_map="auto"
+    model_id, dtype=torch.bfloat16, device_map="auto"
 )
 
 chat_history = []
@@ -43,20 +46,30 @@ def chat_endpoint(message: UserMessage):
 
         inputs = tokenizer(chat_prompt, return_tensors="pt").to(model.device)
 
-        with torch.no_grad():
-            outputs = model.generate(
-                **inputs,
-                max_new_tokens=1024,
-                do_sample=True,
-                temperature=0.7,
-                top_p=0.9
-            )
+        streamer = TextIteratorStreamer(
+            tokenizer, skip_prompt=True, skip_special_tokens=True
+        )
 
-        input_len = inputs.input_ids.shape[1]
-        generated_tokens = outputs[0][input_len:]
-        result = tokenizer.decode(generated_tokens, skip_special_tokens=True)
+        generation_kwargs = dict(
+            **inputs,
+            streamer=streamer,
+            max_new_tokens=256,
+            temperature=0.7,
+            do_sample=True
+        )
+
+        with torch.no_grad():
+            thread = Thread(target=model.generate, kwargs=generation_kwargs)
+            thread.start()
+
         chat_history.append({"role": "model", "content": message.text})
-        return {"response": result}
+
+        def text_streamer():
+            for new_text in streamer:
+                yield new_text
+
+        return StreamingResponse(text_streamer(), media_type="text/plain")
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
