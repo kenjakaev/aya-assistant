@@ -13,6 +13,8 @@ model = AutoModelForCausalLM.from_pretrained(
     model_id, dtype=torch.float16, device_map="auto"
 )
 
+chat_history = []
+
 app = FastAPI(title="Aya Assistant API")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
@@ -29,9 +31,14 @@ def read_root():
 @app.post("/chat")
 def chat_endpoint(message: UserMessage):
     try:
-        messages = [{"role": "user", "content": message.text}]
+        chat_history.append({"role": "user", "content": message.text})
+
+        while len(chat_history) > 20:
+            chat_history.pop(0)
+            chat_history.pop(0)
+
         chat_prompt = tokenizer.apply_chat_template(
-            messages, tokenize=False, add_generation_prompt=True
+            chat_history, tokenize=False, add_generation_prompt=True
         )
 
         inputs = tokenizer(chat_prompt, return_tensors="pt").to(model.device)
@@ -44,6 +51,7 @@ def chat_endpoint(message: UserMessage):
         input_len = inputs.input_ids.shape[1]
         generated_tokens = outputs[0][input_len:]
         result = tokenizer.decode(generated_tokens, skip_special_tokens=True)
+        chat_history.append({"role": "model", "content": message.text})
         return {"response": result}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
