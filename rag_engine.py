@@ -38,15 +38,15 @@ class RAGEngine:
 
         embeddings = self.encoder.encode(
             e5_formatted_texts, convert_to_numpy=True, normalize_embeddings=True
-        )
-        embeddings_faiss = np.array(embeddings).astype("float32")
-        self.index.add(embeddings_faiss)
+        ).astype("float32")
+
+        self.index.add(embeddings)
         self.documents.extend(valid_texts)
 
         logger.info(f"""Succesfully added {len(valid_texts)} fragments. 
             The total amount of documents in database: {self.index.ntotal}""")
 
-    def search(self, query: str, top_k: int = 2) -> list[str]:
+    def search(self, query: str, top_k: int = 2, threshold: float = 0.78) -> list[str]:
         """Finds top k most matching text fragmets for query"""
         if self.index.ntotal == 0:
             logger.warning(f"The database is empty! Returned an empty list")
@@ -61,11 +61,11 @@ class RAGEngine:
         query_vector = self.encoder.encode(
             [e5_formatted_query], convert_to_numpy=True, normalize_embeddings=True
         ).astype("float32")
-        distances, indices = self.index.search(query_vector, top_k)
+        scores, indices = self.index.search(query_vector, top_k)
 
         results = []
-        for idx in indices[0]:
-            if idx != -1 and idx < len(self.documents):
+        for score, idx in zip(scores[0], indices[0]):
+            if idx != -1 and score >= threshold:
                 results.append(self.documents[idx])
 
         logger.info(f"Found {len(results)} matches")

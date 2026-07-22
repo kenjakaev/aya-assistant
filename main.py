@@ -19,9 +19,6 @@ tokenizer = AutoTokenizer.from_pretrained(model_id)
 model = AutoModelForCausalLM.from_pretrained(model_id, dtype=torch.bfloat16).to("cuda")
 
 rag = RAGEngine()
-
-with open("data/system_prompt.txt", "r", encoding="utf-8") as f:
-    system_identity = f.read()
 with open("data/knowledge.txt", "r", encoding="utf-8") as f:
     raw_text = f.read()
     knowledge_base = [
@@ -47,27 +44,21 @@ def read_root():
 @app.post("/chat")
 def chat_endpoint(message: UserMessage):
     try:
-        context_chunks = rag.search(message.text, top_k=3)
-
-        current_user_content = f"{system_identity}\n\n"
+        context_chunks = rag.search(message.text, top_k=2)
 
         if context_chunks:
             context_str = "\n".join(context_chunks)
-            current_user_content += (
+            current_user_content = (
                 f"Knowledge base context:\n{context_str}\n\nUser query: {message.text}"
             )
         else:
-            current_user_content += f"User query: {message.text}"
+            current_user_content = f"User query: {message.text}"
 
         messages_for_model = []
 
         messages_for_model.extend(chat_history)
 
         messages_for_model.append({"role": "user", "content": current_user_content})
-
-        chat_prompt = tokenizer.apply_chat_template(
-            messages_for_model, tokenize=False, add_generation_prompt=True
-        )
 
         chat_prompt = tokenizer.apply_chat_template(
             messages_for_model, tokenize=False, add_generation_prompt=True
