@@ -1,3 +1,4 @@
+import logging
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -7,14 +8,26 @@ from fastapi.responses import StreamingResponse
 from threading import Thread
 from pydantic import BaseModel
 import torch
+from rag_engine import RAGEngine
+
+logger = logging.getLogger("MainApp")
 
 model_id = "google/gemma-2-2b-it"
 
 tokenizer = AutoTokenizer.from_pretrained(model_id)
 
-model = AutoModelForCausalLM.from_pretrained(
-    model_id, dtype=torch.bfloat16, device_map="auto"
-)
+model = AutoModelForCausalLM.from_pretrained(model_id, dtype=torch.bfloat16).to("cuda")
+
+rag = RAGEngine()
+
+with open("data/system_prompt.txt", "r", encoding="utf-8") as f:
+    system_identity = f.read()
+with open("data/knowledge.txt", "r", encoding="utf-8") as f:
+    raw_text = f.read()
+    knowledge_base = [
+        chunk.strip() for chunk in raw_text.split("\n\n") if chunk.strip()
+    ]
+rag.add_documents(knowledge_base)
 
 chat_history = []
 
@@ -34,17 +47,33 @@ def read_root():
 @app.post("/chat")
 def chat_endpoint(message: UserMessage):
     try:
-        chat_history.append({"role": "user", "content": message.text})
+        context_chunks = rag.search(message.text, top_k=3)
 
-        while len(chat_history) > 20:
-            chat_history.pop(0)
-            chat_history.pop(0)
+        current_user_content = f"{system_identity}\n\n"
+
+        if context_chunks:
+            context_str = "\n".join(context_chunks)
+            current_user_content += (
+                f"Knowledge base context:\n{context_str}\n\nUser query: {message.text}"
+            )
+        else:
+            current_user_content += f"User query: {message.text}"
+
+        messages_for_model = []
+
+        messages_for_model.extend(chat_history)
+
+        messages_for_model.append({"role": "user", "content": current_user_content})
 
         chat_prompt = tokenizer.apply_chat_template(
-            chat_history, tokenize=False, add_generation_prompt=True
+            messages_for_model, tokenize=False, add_generation_prompt=True
         )
 
-        inputs = tokenizer(chat_prompt, return_tensors="pt").to(model.device)
+        chat_prompt = tokenizer.apply_chat_template(
+            messages_for_model, tokenize=False, add_generation_prompt=True
+        )
+
+        inputs = tokenizer(chat_prompt, return_tensors="pt").to("cuda")
 
         streamer = TextIteratorStreamer(
             tokenizer, skip_prompt=True, skip_special_tokens=True
@@ -53,20 +82,30 @@ def chat_endpoint(message: UserMessage):
         generation_kwargs = dict(
             **inputs,
             streamer=streamer,
-            max_new_tokens=256,
-            temperature=0.7,
-            do_sample=True
+            max_new_tokens=512,
+            temperature=0.45,
+            top_p=0.85,
+            do_sample=True,
         )
 
         with torch.no_grad():
             thread = Thread(target=model.generate, kwargs=generation_kwargs)
             thread.start()
 
-        chat_history.append({"role": "model", "content": message.text})
-
         def text_streamer():
+            full_response_chunks = []
             for new_text in streamer:
+                full_response_chunks.append(new_text)
                 yield new_text
+
+            full_response = "".join(full_response_chunks)
+
+            chat_history.append({"role": "user", "content": message.text})
+            chat_history.append({"role": "model", "content": full_response})
+
+            while len(chat_history) > 20:
+                chat_history.pop(0)
+                chat_history.pop(0)
 
         return StreamingResponse(text_streamer(), media_type="text/plain")
 
