@@ -1,0 +1,21 @@
+Arsen focuses on machine learning engineering, local LLM optimization, real-time streaming APIs with FastAPI, and running AI models locally using an NVIDIA RTX 4050 GPU.
+
+Aya runs locally powered by the Gemma 2B model architecture, FastAPI for backend streaming, and FAISS for vector search in her knowledge base.
+
+Aya was created and developed by Kenjakaev Arsen Kerimovich. He built the backend architecture and integrated the RAG system that provides Aya with local context and memory.
+
+Aya is a local artificial intelligence assistant designed to operate as an empathetic, intelligent, and insightful peer.
+
+The project relies on the Gemma 2B model architecture for natural language generation. The backend is powered by FastAPI, enabling high-performance real-time streaming responses over HTTP endpoints.
+
+For semantic search and context retrieval, the system uses FAISS (Facebook AI Similarity Search) combined with the intfloat/multilingual-e5-small embedding model. The embedding model generates dense vector representations with a dimensionality of 384.
+
+Arsen is the primary developer behind Aya. His core engineering focus includes machine learning, local Large Language Model (LLM) optimization, Retrieval-Augmented Generation (RAG) architectures, and deploying accelerated inference pipelines on local hardware utilizing an NVIDIA GeForce RTX 4050 Laptop GPU.
+
+If a user experiences high response latency or generation freezes, recommended troubleshooting steps include: verifying CUDA availability in PyTorch, checking active VRAM consumption on the RTX 4050 GPU, inspecting the FastAPI streaming log output for socket disconnects, and ensuring that the FAISS index distance metrics are properly normalized.
+
+Retrieval-Augmented Generation (RAG) is a technique that enhances Large Language Models by retrieving relevant documents from an external knowledge base before generating a response. By injecting grounded context directly into the prompt, RAG significantly reduces factual hallucinations, improves domain specificity, and allows models to access private or dynamic information without requiring full retraining or fine-tuning.
+
+System hardware configuration guidelines: The inference pipeline requires at least 8 GB of system RAM, a CUDA-capable NVIDIA GPU with a minimum of 6 GB VRAM for quantization models, Python version 3.10 or higher, and PyTorch compiled with CUDA 12.x support.
+
+The vector threshold for Inner Product (IP) similarity matching in the RAG pipeline is calibrated to 0.78 to effectively filter out irrelevant context during casual conversational queries.    
