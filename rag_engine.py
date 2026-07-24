@@ -43,8 +43,10 @@ class RAGEngine:
         self.index.add(embeddings)
         self.documents.extend(valid_texts)
 
-        logger.info(f"""Succesfully added {len(valid_texts)} fragments. 
-            The total amount of documents in database: {self.index.ntotal}""")
+        logger.info(
+            f"Successfully added {len(valid_texts)} fragments. "
+            f"Total documents in database: {self.index.ntotal}"
+        )
 
     def search(self, query: str, top_k: int = 2, threshold: float = 0.78) -> list[str]:
         """Finds top k most matching text fragmets for query"""
@@ -69,6 +71,7 @@ class RAGEngine:
                 results.append(self.documents[idx])
 
         logger.info(f"Found {len(results)} matches")
+        logger.info(f"{results}")
         return results
 
 
